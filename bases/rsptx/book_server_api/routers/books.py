@@ -339,30 +339,33 @@ async def serve_page(
     # TODO: restore the contributed questions list ``questions`` for books (only fopp) that
     # show the contributed questions list on an Exercises page.
 
-    # Determine if we should ask for support
-    # Trying to do banner ads after the 2nd week of the term
-    # but not to high school students or if the instructor has donated for the course
-    now = datetime.utcnow().date()
-    week2 = timedelta(weeks=2)
-    if (
-        now >= (course_row.term_start_date + week2)
-        and course_row.base_course != "csawesome"
-        and course_row.base_course != "mobilecsp"
-        and course_row.courselevel != "high"
-        and course_row.course_name != course_row.base_course
-        and not course_row.is_supporter
-    ):
-        show_rs_banner = True
-    elif course_row.course_name == course_row.base_course and random.random() <= 0.3:
-        # Show banners to base course users 30% of the time.
-        show_rs_banner = True
+    if not settings.academy_mode:
+        show_rs_banner = False
     else:
-        show_rs_banner = False
-    rslogger.debug(f"Before user check rs_banner is {show_rs_banner}")
+        # Determine if we should ask for support
+        # Trying to do banner ads after the 2nd week of the term
+        # but not to high school students or if the instructor has donated for the course
+        now = datetime.utcnow().date()
+        week2 = timedelta(weeks=2)
+        if (
+            now >= (course_row.term_start_date + week2)
+            and course_row.base_course != "csawesome"
+            and course_row.base_course != "mobilecsp"
+            and course_row.courselevel != "high"
+            and course_row.course_name != course_row.base_course
+            and not course_row.is_supporter
+        ):
+            show_rs_banner = True
+        elif course_row.course_name == course_row.base_course and random.random() <= 0.3:
+            # Show banners to base course users 30% of the time.
+            show_rs_banner = True
+        else:
+            show_rs_banner = False
+        rslogger.debug(f"Before user check rs_banner is {show_rs_banner}")
 
-    if user and user.donated:
-        show_rs_banner = False
-    rslogger.debug(f"After user check rs_banner is {show_rs_banner}")
+        if user and user.donated:
+            show_rs_banner = False
+        rslogger.debug(f"After user check rs_banner is {show_rs_banner}")
 
     worker_name = os.environ.get("WORKER_NAME", socket.gethostname())
     if worker_name == "":
